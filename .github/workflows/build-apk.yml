@@ -1,1 +1,36 @@
+name: Build Android APK
 
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Extract project
+        run: |
+          mkdir project
+          unzip -q salary_manager_secure_v2_codemagic.zip -d project
+          cd project
+          if [ ! -f pubspec.yaml ]; then
+            DIR=$(find . -name pubspec.yaml -type f | head -1)
+            cd "$(dirname "$DIR")"
+          fi
+          flutter create . --platforms=android
+          flutter pub get
+          flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: salary-manager-apk
+          path: project/**/build/app/outputs/flutter-apk/app-release.apk
